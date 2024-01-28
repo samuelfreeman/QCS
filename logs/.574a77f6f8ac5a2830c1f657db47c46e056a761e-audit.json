@@ -1,0 +1,30 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 7
+    },
+    "auditLog": "/home/sam/Documents/Allprojects/qcs_backend/logs/.574a77f6f8ac5a2830c1f657db47c46e056a761e-audit.json",
+    "files": [
+        {
+            "date": 1706151381276,
+            "name": "/home/sam/Documents/Allprojects/qcs_backend/logs/-error.log.2024-01-25",
+            "hash": "19ba7d4540de3f5c42569bb024bb4980ef9cbef1a1c485c46a59ed81c2a7ab9e"
+        },
+        {
+            "date": 1706272385951,
+            "name": "/home/sam/Documents/Allprojects/qcs_backend/logs/-error.log.2024-01-26",
+            "hash": "5d62d0bc23d53d1b70b7a2f2cca316e4d81d3c6f1c065e920e00ebcb16c33379"
+        },
+        {
+            "date": 1706378320496,
+            "name": "/home/sam/Documents/Allprojects/qcs_backend/logs/-error.log.2024-01-27",
+            "hash": "a2458bec81390ca716339aa3afb6d9cc220d999069203eb69f9ff481e9fa0452"
+        },
+        {
+            "date": 1706400418940,
+            "name": "/home/sam/Documents/Allprojects/qcs_backend/logs/-error.log.2024-01-28",
+            "hash": "551dcb81d7be6693255a5e7d282a8f8621319269022d84fa1e3e58e450e1efbf"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -1,0 +1,234 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+///  the admin model for overlooking  the whole application
+model users {
+  id         String    @id @unique @default(uuid())
+  fullname   String
+  email      String    @unique
+  telephone  String?
+  password   String
+  cities     cities?   @relation(fields: [location], references: [id])
+  location   String?
+  code       String?
+  expiration DateTime?
+  role_name  String?
+  confirmed  Boolean   @default(false)
+  del_flg    Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+/// the payment model to record payments
+model payments {
+  id        String  @id @unique @default(uuid())
+  amount    Float   @default(0.00)
+  type      String
+  reference String?
+  orderCode Int
+  narration String
+}
+///  the biker model to deliver and pickup  orderpackages
+model bikers {
+  id                     String          @id @unique @default(uuid())
+  fullname               String
+  email                  String?
+  telephone              String          @unique
+  password               String
+  code                   String?
+  expiration             DateTime?
+  confirmed              Boolean         @default(false)
+  del_flg                Int             @default(0)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  packagesPickupBikers   orderPackages[] @relation(name: "pickupBiker")
+  packagesDeliveryBikers orderPackages[] @relation(name: "deliveryBiker")
+  cities                 cities?         @relation(fields: [location], references: [id])
+  location               String?
+}
+///  the sender  model to create orders and add receivers
+model senders {
+  id             String      @id @unique @default(uuid())
+  fullname       String
+  email          String?
+  telephone      String      @unique
+  suburbs        suburbs?    @relation(fields: [pickUpLocation], references: [id])
+  pickUpLocation String?
+  password       String
+  confirmed      Boolean     @default(false)
+  isDormat       Boolean     @default(false)
+  code           String?
+  expiration     DateTime?
+  lastLogin      DateTime    @default(now())
+  rewardPoints   Int         @default(0)
+  redeemedPoints Int         @default(0)
+  del_flg        Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  receivers      receivers[]
+  orders         orders[]
+}
+/// receiver model to  receive orderpackages
+model receivers {
+  id               String          @id @unique @default(uuid())
+  fullname         String
+  telephone        String          @unique
+  email            String?
+  suburbs          suburbs?        @relation(fields: [deliveryLocation], references: [id])
+  deliveryLocation String?
+  del_flg          Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  senders          senders?        @relation(fields: [senderId], references: [id])
+  senderId         String?
+  packages         orderPackages[]
+}
+/// order packages to create orders
+model orders {
+  orderCode          String          @id @unique
+  sender             senders?        @relation(fields: [senderId], references: [id])
+  senderId           String?
+  orderType          OrderType?
+  grandAmount        Float           @default(0.00)
+  discountAmount     Float           @default(0.00)
+  discountPercentage Float           @default(0.00)
+  totalAmount        Float           @default(0.00)
+  del_flg            Boolean         @default(false)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  suburbs            suburbs?       @relation(fields: [pickUpLocation], references: [id])
+  pickUpLocation     String?
+  packages           orderPackages[]
+}
+/// order packages to contain package information and package histories
+model orderPackages {
+  id                     String             @id @unique @default(uuid())
+  orders                 orders?            @relation(fields: [orderId], references: [orderCode])
+  orderId                String
+  orderCode              String
+  receiver               receivers?         @relation(fields: [receiverId], references: [id])
+  receiverId             String?
+  suburb                 suburbs?           @relation(fields: [deliveryLocation], references: [id])
+  deliveryLocation       String?
+  details                String?
+  paymentBy              paymentBy          @default(Sender)
+  estimatedWeight        Float              @default(1)
+  baseWeight             Int                @default(1)
+  extraWeight            Int                @default(0)
+  valueOfPackage         Float              @default(0.00)
+  itemCost               Float              @default(0.00)
+  deliveryFee            Float              @default(0.00)
+  itemImage              String?
+  pickupBiker            bikers?            @relation(name: "pickupBiker", fields: [pickupBikerId], references: [id])
+  pickupBikerId          String?
+  deliverBiker           bikers?            @relation(name: "deliveryBiker", fields: [deliverBikerId], references: [id])
+  deliverBikerId         String?
+  status                 status?
+  secondReceipientName   String?
+  secondReceipientNumber String?
+  reason                 String?
+  pickup_share           Float              @default(0.00)
+  delivery_share         Float              @default(0.00)
+  transit_share          Float              @default(0.00)
+  system_share           Float              @default(0.00)
+  qcs_share              Float              @default(0.00)
+  del_flg                Boolean            @default(false)
+  insured                Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  packageHistories       packageHistories[]
+}
+
+// Pick up 6
+// Delivery 8
+// Transit 2
+// System 1
+// Remainder QCS
+
+/// packageHistory model to contain package history information
+model packageHistories {
+  id        String         @id @unique @default(uuid())
+  status    status
+  packages  orderPackages? @relation(fields: [packageId], references: [id])
+  packageId String?
+  reason    String?
+  del_flg   Int            @default(0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+/// suburb model to contain the loctaion of the orders,orderpackages,senders and receivers
+model suburbs {
+  id             String           @id @unique @default(uuid())
+  suburb_name    String
+  del_flg        Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  cities         cities?          @relation(fields: [cityId], references: [id])
+  cityId         String?
+  deliveryPrices deliveryPrices[]
+  orders         orders[]
+  orderPackages  orderPackages[]
+  senders        senders[]
+  receivers      receivers[]
+}
+/// city model to contain the cities information  and their prices
+model cities {
+  id                        String           @id @unique @default(uuid())
+  city_name                 String
+  initials                  String
+  del_flg                   Boolean          @default(false)
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+  suburbs                   suburbs[]
+  users                     users[]
+  biker                     bikers[]
+  citydeliveryPrices        deliveryPrices[] @relation(name: "sentFrom")
+  destinationdeliveryPrices deliveryPrices[] @relation(name: "destination")
+}
+
+/// deliveryPrices to contain the delivery price information and  prices of  each suburb
+model deliveryPrices {
+  id               String   @id @unique @default(uuid())
+  destination      cities?  @relation(name: "destination", fields: [destinationId], references: [id])
+  destinationId    String?
+  cities           cities?  @relation(name: "sentFrom", fields: [cityId], references: [id])
+  cityId           String?
+  baseWeightPrice  Float    @default(0.00)
+  extraWeightPrice Float    @default(0.00)
+  del_flg          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  suburbs          suburbs? @relation(fields: [suburbsId], references: [id])
+  suburbsId        String?
+}
+
+enum status {
+  Created
+  Processed
+  Enroute
+  Arrived
+  Dispatched
+  Delivered
+  Returned
+  Pending
+}
+
+enum paymentBy {
+  Receiver
+  Sender
+}
+
+enum OrderType {
+  Express
+  Scheduled
+  Same_Day
+  Next_Day
+}
