@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Order Package operations should throw HttpException with 404 status if the package has already been picked up by the same biker 1`] = `"OrderPackage has already been picked up by the same biker"`;
+
+exports[`Order Package operations should throw HttpException with 422 status if the package has already been assigned to the same biker 1`] = `"OrderPackage has already been assigned to the same biker"`;

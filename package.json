@@ -4,11 +4,12 @@
   "description": "",
   "main": "./src/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest .",
     "start": "node --watch ./src/app.js",
-    "seed":"node ./src/prisma/seed.js",
+    "seed": "node ./src/prisma/seed.js",
     "migrate:dev": "npx prisma migrate dev",
     "generate": "npx prisma generate"
+    
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "fs-extra": "^11.2.0",
     "helmet": "^7.1.0",
     "http": "^0.0.1-security",
+    "jest": "^29.7.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "moment": "^2.30.1",

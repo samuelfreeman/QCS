@@ -261,7 +261,7 @@ const getPackageDetails = async (id) => {
 const updatePackages = async (packageIds, packageStatus) => {
   // Find all packages based on the provided IDs
 
-  const package = await prisma.orderPackages.findMany({
+  const Package = await prisma.orderPackages.findMany({
     where: {
       id: { in: packageIds },
       del_flg: false, // Filter packages by the given packageIds
@@ -281,7 +281,7 @@ const updatePackages = async (packageIds, packageStatus) => {
 
   // Create history entries for each package being updated
   const historyEntries = await Promise.all(
-    package.map(async (pkg) => {
+    Package.map(async (pkg) => {
       return await prisma.packageHistories.create({
         data: {
           status: packageStatus,
