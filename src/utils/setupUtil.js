@@ -8,6 +8,7 @@ const getCity = async () => {
       city_name: "asc",
     },
   });
+  console.log(city)
   return city.id;
 };
 const data = {
@@ -20,18 +21,23 @@ const data = {
 
 export const run = async () => {
   try {
-    const users = await prisma.users.findMany();
-
-    if (users.length === 0) {
-      const password = await hashPassword(data.password);
+      const users = await prisma.users.findMany();
+      
+      
+      if (users.length === 0) {
+          const password = await hashPassword(data.password);
       data.password = password;
       data.confirmed = true;
       data.location = await getCity();
       await prisma.users.create({
-        data,
-      });
+          data,
+        });
+        console.log("super user created successfully");
+    }else{
+        console.log("super user already exists")
     }
   } catch (error) {
     loggerUtil.error(error.message);
+    console.log(error)
   }
 };

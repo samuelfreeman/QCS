@@ -54,7 +54,7 @@ ManageUserRouter.post("/login", user.loginUser);
  *       201:
  *         description: User created successfully
  */
-ManageUserRouter.post("/signUp", user.saveUser);
+ManageUserRouter.post("/signUp", user.RegisterUser);
 
 /**
  * @swagger

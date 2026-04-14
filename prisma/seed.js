@@ -1,7 +1,14 @@
-const { PrismaClient } = require('@prisma/client');
+import "dotenv/config";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../src/generated/prisma/index.js";
 
-const prisma = new PrismaClient();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 const cities = [
     {
         city_name: 'Kumasi',
@@ -1609,8 +1616,8 @@ const cities = [
 ];
 
 async function main() {
-    await Promise.all([
-        cities.map(async item => {
+    await Promise.all(
+    cities.map(async (item) => {
             await prisma.cities.create({
                 data: {
                     city_name: item.city_name,
@@ -1619,7 +1626,7 @@ async function main() {
                 }
             });
         })
-    ]);
+    );
 
     // await prisma.cities.createMany({
     //     // data: cities,
