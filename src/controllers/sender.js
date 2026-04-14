@@ -1,45 +1,29 @@
-const passwordUtil = require("../utils/passwordUtil");
-const HttpException = require("../middlewares/http-exception");
-const loggerUtil = require("../utils/loggerUtil");
-const tokenUtil = require("../utils/tokenUtil");
-const { formatGhPhoneNumber } = require("../utils/commonUtil");
-const moment = require("moment");
-const HttpStatus = require("../utils/httpStatus");
-
-const {
-  checkSenderExists,
-  checkSuburbExists,
-  checkUserExists,
-  updateUserTotp,
-  findToken,
-  createSender,
-  getSendersReceivers,
-  sendersPackages,
-  authSender,
-  getSendersByLocation,
-  getSingleSender,
-  editSender,
-  removeSender,
-} = require("../helpers/senderHelper");
+import { hashPassword, comparePassword } from "../utils/passwordUtil.js";
+import HttpException from "../middlewares/http-exception.js";
+import loggerUtil from "../utils/loggerUtil.js";
+import { signToken, setInvalidToken } from "../utils/tokenUtil.js";
+import { formatGhPhoneNumber } from "../utils/commonUtil.js";
+import moment from "moment";
+import HttpStatus from "../utils/httpStatus.js";
+import * as senderHelpers from "../helpers/senderHelper.js";
 // register a  sender
-exports.createSender = async (req, res, next) => {
+export const createSender = async (req, res, next) => {
   try {
-    user .dt
     const data = req.body;
     const telephone = formatGhPhoneNumber(data.telephone);
-    const oldSender = await checkSenderExists(telephone);
+    const oldSender = await senderHelpers.checkSenderExists(telephone);
     if (oldSender) {
       loggerUtil.error("Sender Already Exists");
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        "Sender Already Exists"
+        "Sender Already Exists",
       );
     }
-    const suburb = await checkSuburbExists(data.pickUpLocation);
+    const suburb = await senderHelpers.checkSuburbExists(data.pickUpLocation);
     if (!suburb) {
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        "Suburb Id is not Valid"
+        "Suburb Id is not Valid",
       );
     }
     data.code = "1234";
@@ -47,7 +31,7 @@ exports.createSender = async (req, res, next) => {
     // use data.passowrd to create a hashed password
     data.password = password;
     data.telephone = telephone;
-    const sender = await createSender(data);
+    const sender = await senderHelpers.createSender(data);
     res.status(HttpStatus.CREATED).json({
       sender,
     });
@@ -56,13 +40,13 @@ exports.createSender = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 // get sender's receipents
-exports.senderRecipients = async (req, res, next) => {
+export const senderRecipients = async (req, res, next) => {
   const { senderId } = req.params;
 
   try {
@@ -73,16 +57,16 @@ exports.senderRecipients = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     return next(
-      new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
+      new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, error.message),
     );
   }
 };
 // get senders packages
-exports.senderPackages = async (req, res, next) => {
+export const senderPackages = async (req, res, next) => {
   const { senderId } = req.params;
 
   try {
-    const packages = await sendersPackages(senderId);
+    const packages = await senderHelpers.sendersPackages(senderId);
 
     return res
       .status(HttpStatus.OK)
@@ -90,32 +74,29 @@ exports.senderPackages = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     return next(
-      new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
+      new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, error.message),
     );
   }
 };
 // login a sender into the database
-exports.loginSender = async (req, res, next) => {
+export const loginSender = async (req, res, next) => {
   // this function takes in an email and password and compares it //
   let { password, telephone } = req.body;
   telephone = formatGhPhoneNumber(telephone);
 
   try {
-    const exists = await checkUserExists(telephone);
+    const exists = await senderHelpers.checkUserExists(telephone);
     if (exists.user === null || exists.user === "null") {
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        "Account not  found!"
+        "Account not  found!",
       );
     }
-    const validPwd = await passwordUtil.comparePassword(
-      password,
-      exists.user?.password
-    );
+    const validPwd = await comparePassword(password, exists.user?.password);
     if (validPwd === false || validPwd === "false") {
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        "Invalid credentials!"
+        "Invalid credentials!",
       );
     }
     const expiration = moment().add(5, "minutes");
@@ -123,7 +104,11 @@ exports.loginSender = async (req, res, next) => {
       code: "1234",
       expiration,
     };
-    const user = await updateUserTotp(exists.isBiker, exists.user.id, data);
+    const user = await senderHelpers.updateUserTotp(
+      exists.isBiker,
+      exists.user.id,
+      data,
+    );
     delete user.password;
     res.status(HttpStatus.OK).json({
       status: "success",
@@ -135,15 +120,15 @@ exports.loginSender = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
 // verify sender's token login
 
-exports.verifyTokenlogin = async (req, res, next) => {
+export const verifyTokenlogin = async (req, res, next) => {
   try {
     let { otp, telephone } = req.body;
     telephone = formatGhPhoneNumber(telephone);
@@ -152,13 +137,17 @@ exports.verifyTokenlogin = async (req, res, next) => {
       throw new HttpException(HttpStatus.UNPROCESSABLE_ENTITY, "invalid otp");
     }
 
-    const token = tokenUtil.signToken(find.user);
+    const token = signToken(find.user);
     res.header("Authorization", token);
 
     const data = {
       confirmed: true,
     };
-    const user = await updateUserTotp(find.isBiker, find.user.id, data);
+    const user = await senderHelpers.updateUserTotp(
+      find.isBiker,
+      find.user.id,
+      data,
+    );
 
     delete user.password;
     res.status(HttpStatus.OK).json({
@@ -175,15 +164,15 @@ exports.verifyTokenlogin = async (req, res, next) => {
   }
 };
 // request login otp
-exports.requestOtp = async (req, res, next) => {
+export const requestOtp = async (req, res, next) => {
   try {
     let { telephone } = req.params;
     telephone = formatGhPhoneNumber(telephone);
-    const find = await checkUserExists(telephone);
+    const find = await senderHelpers.checkUserExists(telephone);
     if (find.user === null || find.user === "null") {
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        "Account not  found!"
+        "Account not  found!",
       );
     }
     const expiration = moment().add(5, "minutes");
@@ -192,7 +181,11 @@ exports.requestOtp = async (req, res, next) => {
       expiration,
     };
 
-    const user = await updateUserTotp(find.isBiker, find.user.id, data);
+    const user = await senderHelpers.updateUserTotp(
+      find.isBiker,
+      find.user.id,
+      data,
+    );
     delete user.password;
     res.status(HttpStatus.OK).json({
       status: "success",
@@ -204,11 +197,11 @@ exports.requestOtp = async (req, res, next) => {
   }
 };
 // request a verification token for resetting password
-exports.verifyTokenReset = async (req, res, next) => {
+export const verifyTokenReset = async (req, res, next) => {
   try {
     let { otp, telephone } = req.body;
     telephone = formatGhPhoneNumber(telephone);
-    const find = await findToken(otp, telephone);
+    const find = await senderHelpers.findToken(otp, telephone);
     if (find.user === null || find.user === "null") {
       throw new HttpException(HttpStatus.UNPROCESSABLE_ENTITY, "invalid otp");
     }
@@ -224,24 +217,24 @@ exports.verifyTokenReset = async (req, res, next) => {
   }
 };
 // function for resetting a user's password
-exports.resetPassword = async (req, res, next) => {
+export const resetPassword = async (req, res, next) => {
   try {
     let { telephone } = req.params;
     let { password } = req.body;
     telephone = formatGhPhoneNumber(telephone);
-    const exists = await checkUserExists(telephone);
+    const exists = await senderHelpers.checkUserExists(telephone);
 
     if (exists.user === null || exists.user === "null") {
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        "Account not  found!"
+        "Account not  found!",
       );
     }
-    password = await passwordUtil.hashPassword(password);
+    password = await hashPassword(password);
     if (!password) {
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        " Password not hashed"
+        " Password not hashed",
       );
     }
     const expiration = moment().add(1, "minutes");
@@ -250,7 +243,11 @@ exports.resetPassword = async (req, res, next) => {
       expiration,
       password,
     };
-    const user = await updateUserTotp(exists.isBiker, exists.user.id, data);
+    const user = await senderHelpers.updateUserTotp(
+      exists.isBiker,
+      exists.user.id,
+      data,
+    );
     delete user.password;
     res.status(HttpStatus.OK).json({
       status: "success",
@@ -263,10 +260,10 @@ exports.resetPassword = async (req, res, next) => {
   }
 };
 // function to logout a user
-exports.logout = async (req, res, next) => {
+export const logout = async (req, res, next) => {
   try {
     const loggedout = "loggedout";
-    tokenUtil.setInvalidToken(loggedout);
+    setInvalidToken(loggedout);
     return res.status(HttpStatus.OK).json({
       status: "success",
       message: "logged out",
@@ -277,10 +274,10 @@ exports.logout = async (req, res, next) => {
   }
 };
 // get the authenticated user
-exports.getAuthSender = async (req, res, next) => {
+export const getAuthSender = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const sender = await authSender(id);
+    const sender = await senderHelpers.authSender(id);
     return res.status(HttpStatus.OK).json({ sender });
   } catch (error) {
     loggerUtil.error(error.message);
@@ -289,10 +286,10 @@ exports.getAuthSender = async (req, res, next) => {
 };
 
 //  loading all senders
-exports.getAllSenders = async (req, res, next) => {
+export const getAllSenders = async (req, res, next) => {
   try {
     const { location } = req.params;
-    const user = await getSendersByLocation(location);
+    const user = await senderHelpers.getSendersByLocation(location);
     res.status(HttpStatus.OK).json({
       user,
     });
@@ -302,10 +299,10 @@ exports.getAllSenders = async (req, res, next) => {
   }
 };
 //  loading a single user
-exports.getSingleSender = async (req, res, next) => {
+export const getSingleSender = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const user = await getSingleSender(id);
+    const user = await senderHelpers.getSingleSender(id);
     res.status(HttpStatus.OK).json({
       user,
     });
@@ -315,14 +312,14 @@ exports.getSingleSender = async (req, res, next) => {
   }
 };
 //  editing a sender
-exports.updateSender = async (req, res, next) => {
+export const updateSender = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
     if (data.password) {
       data.password = await passwordUtil.hashPassword(data.password);
     }
-    const sender = await editSender(id);
+    const sender = await senderHelpers.editSender(id);
     res.status(HttpStatus.OK).json({
       message: "Sender info updated",
       sender,
@@ -334,10 +331,10 @@ exports.updateSender = async (req, res, next) => {
 };
 
 //  deleting a customer
-exports.deleteSender = async (req, res, next) => {
+export const deleteSender = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const user = await removeSender(id);
+    const user = await senderHelpers.removeSender(id);
     res.status(HttpStatus.OK).json({
       user,
     });

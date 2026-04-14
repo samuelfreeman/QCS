@@ -1,32 +1,21 @@
-const HttpException = require("../middlewares/http-exception");
-
-const loggerUtil = require("../utils/loggerUtil");
-
-const HttpStatus = require("../utils/httpStatus");
-
-const {
-  checkCityExits,
-  createCity,
-  findSingleCity,
-  getAllCites,
-  updateCity,
-  deleteSuburbs,
-  deleteCity,
-} = require("../helpers/cityHelper");
+import HttpException from "../middlewares/http-exception.js";
+import loggerUtil from "../utils/loggerUtil.js";
+import HttpStatus from "../utils/httpStatus.js";
+import * as cityHelpers from "../helpers/cityHelper.js";
 
 // deactivated this  function because cities will be seeded
-exports.createCity = async (req, res, next) => {
+export const createCity = async (req, res, next) => {
   try {
     const data = req.body;
-    const cityExits = await checkCityExits(data.city_name);
+    const cityExits = await cityHelpers.checkCityExits(data.city_name);
     if (cityExits) {
       loggerUtil.error("City Already Exists");
       throw new HttpException(
         HttpStatus.UNPROCESSABLE_ENTITY,
-        "City Already Exists"
+        "City Already Exists",
       );
     } else {
-      const city = await createCity(data);
+      const city = await cityHelpers.createCity(data);
       res.status(HttpStatus.CREATED).json({
         city,
       });
@@ -36,17 +25,17 @@ exports.createCity = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
 //    endpoint to get cities
 
-exports.getCities = async (req, res, next) => {
+export const getCities = async (req, res, next) => {
   try {
-    const cities = await getAllCites();
+    const cities = await cityHelpers.getAllCites();
 
     res.status(HttpStatus.OK).json({
       cities,
@@ -58,10 +47,10 @@ exports.getCities = async (req, res, next) => {
 };
 //  get a single city
 
-exports.getSingleCity = async (req, res, next) => {
+export const getSingleCity = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const city = await findSingleCity(id);
+    const city = await cityHelpers.findSingleCity(id);
 
     res.status(HttpStatus.OK).json({
       city,
@@ -74,16 +63,16 @@ exports.getSingleCity = async (req, res, next) => {
 
 //   endpoint to update a city
 
-exports.updateCity = async (req, res, next) => {
+export const updateCity = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
     if (id) {
-      const findCity = await findSingleCity(id);
+      const findCity = await cityHelpers.findSingleCity(id);
       if (!findCity) {
         throw new HttpException(HttpStatus.NOT_FOUND, "City not found");
       } else {
-        const city = await updateCity(id, data);
+        const city = await cityHelpers.updateCity(id, data);
         res.status(HttpStatus.OK).json({
           city,
         });
@@ -98,14 +87,14 @@ exports.updateCity = async (req, res, next) => {
 };
 
 //  deleting a city
-exports.removeCity = async (req, res, next) => {
+export const removeCity = async (req, res, next) => {
   try {
     const { id } = req.params;
     if (!id) {
       throw new HttpException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid input");
     } else {
-      await deleteSuburbs(id);
-      const cities = await deleteCity(id);
+      await cityHelpers.deleteSuburbs(id);
+      const cities = await cityHelpers.deleteCity(id);
       res.status(HttpStatus.OK).json({
         status: "successful",
         message: "city deleted",
@@ -117,8 +106,8 @@ exports.removeCity = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };

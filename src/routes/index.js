@@ -1,7 +1,7 @@
-const { Router } = require('express');
-const V1Router = require('./v1');
+import { Router } from "express";
+import V1Router from "./v1/index.js";
 
 const APIRouter = Router();
-APIRouter.use('/v1', V1Router);
+APIRouter.use("/v1", V1Router);
 
-module.exports = APIRouter;
+export default APIRouter;

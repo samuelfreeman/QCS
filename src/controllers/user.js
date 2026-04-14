@@ -1,38 +1,21 @@
-const prisma = require("../utils/prismaUtil");
-
-const passwordUtil = require("../utils/passwordUtil");
-
-const HttpException = require("../middlewares/http-exception");
-
-const loggerUtil = require("../utils/loggerUtil");
-
-const {
-  checkUserExists,
-  saveUser,
-  validateEmail,
-  validateConfirmed,
-  validatePwd,
-  findAuthUser,
-  generateVrificationToken,
-  getUsers,
-} = require("../helpers/userHelper");
-
-const moment = require("moment");
-
-const tokenUtil = require("../utils/tokenUtil");
-
-const { formatGhPhoneNumber } = require("../utils/commonUtil");
-
-const HttpStatus = require("../utils/httpStatus");
+import prisma from "../utils/prismaUtil.js";
+import { hashPassword, comparePassword } from "../utils/passwordUtil.js";
+import HttpException from "../middlewares/http-exception.js";
+import loggerUtil from "../utils/loggerUtil.js";
+import * as userHelpers from "../helpers/userHelper.js";
+import moment from "moment";
+import { signToken, setInvalidToken } from "../utils/tokenUtil.js";
+import { formatGhPhoneNumber } from "../utils/commonUtil.js";
+import HttpStatus from "../utils/httpStatus.js";
 
 // ================== Admin auth ================>
 
-exports.saveUser = async (req, res, next) => {
+export const RegisterUser = async (req, res, next) => {
   try {
     const data = req.body;
 
     const telephone = formatGhPhoneNumber(data.telephone);
-    const oldUser = await checkUserExists(data.email);
+    const oldUser = await userHelpers.checkUserExists(data.email);
 
     if (oldUser) {
       loggerUtil.error("User Already Exists");
@@ -40,7 +23,7 @@ exports.saveUser = async (req, res, next) => {
     }
     data.code = "1234";
 
-    const password = await passwordUtil.hashPassword(data.password);
+    const password = await hashPassword(data.password);
 
     // assign  proccessed values to data
     data.password = password;
@@ -48,7 +31,7 @@ exports.saveUser = async (req, res, next) => {
     data.role_name = "BRANCH ADMIN";
 
     // save user data
-    const user = await saveUser(data);
+    const user = await userHelpers.saveUser(data);
 
     delete user.password;
     res.status(HttpStatus.CREATED).json({
@@ -61,7 +44,7 @@ exports.saveUser = async (req, res, next) => {
   }
 };
 
-exports.updateUser = async (req, res, next) => {
+export const updateUser = async (req, res, next) => {
   const { id } = req.params;
   const data = req.body;
   try {
@@ -74,7 +57,7 @@ exports.updateUser = async (req, res, next) => {
       loggerUtil.error("User not found!");
       throw new HttpException(HttpStatus.NOT_FOUND, "User not found!");
     } else {
-      if (data.password) await passwordUtil.hashPassword(data.password);
+      if (data.password) await hashPassword(data.password);
       const updateUser = await prisma.users.update({
         where: {
           id,
@@ -91,21 +74,21 @@ exports.updateUser = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
-exports.loginUser = async (req, res, next) => {
+export const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
   try {
-    const emailValidated = await validateEmail(email);
-    const user = await validateConfirmed(emailValidated?.email);
-    const valid = await validatePwd(password, user?.password || "");
+    const emailValidated = await userHelpers.validateEmail(email);
+    const user = await userHelpers.validateConfirmed(emailValidated?.email);
+    const valid = await userHelpers.validatePwd(password, user?.password || "");
 
     if (valid === true || valid === "true") {
-      const token = tokenUtil.signToken(user);
+      const token = signToken(user);
       res.header("Authorization", token);
       res.status(HttpStatus.OK).json({
         status: "success",
@@ -118,15 +101,15 @@ exports.loginUser = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
-exports.logout = async (req, res, next) => {
+export const logout = async (req, res, next) => {
   try {
     const loggedout = "loggedout";
-    tokenUtil.setInvalidToken(loggedout);
+    setInvalidToken(loggedout);
     return res.status(HttpStatus.OK).json({
       status: "success",
       message: "logged out",
@@ -137,11 +120,11 @@ exports.logout = async (req, res, next) => {
   }
 };
 
-exports.getAuthUser = async (req, res, next) => {
+export const getAuthUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const user = await findAuthUser(id);
+    const user = await userHelpers.findAuthUser(id);
 
     return res.status(HttpStatus.OK).json({ user });
   } catch (error) {
@@ -150,10 +133,10 @@ exports.getAuthUser = async (req, res, next) => {
   }
 };
 
-exports.getAllUsers = async (req, res, next) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const { location } = req.params;
-    const users = await getUsers(location);
+    const users = await userHelpers.getUsers(location);
     res.status(HttpStatus.OK).json({
       users,
     });
@@ -162,7 +145,7 @@ exports.getAllUsers = async (req, res, next) => {
     next(new HttpException(HttpStatus.NOT_FOUND, error.message));
   }
 };
-exports.deleteUser = async (req, res, next) => {
+export const deleteUser = async (req, res, next) => {
   try {
     const id = req.params.id;
     const user = await prisma.users.delete({
@@ -181,17 +164,17 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 // forget password controllers
-exports.forgetPassword = async (req, res, next) => {
+export const forgetPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const exists = await checkUserExists(email);
+    const exists = await userHelpers.checkUserExists(email);
     if (!exists) {
       throw new HttpException(HttpStatus.NOT_FOUND, "Invalid email");
     }
     {
       const expiration = moment().add(5, "minutes");
       const data = {
-        code: generateVrificationToken(),
+        code: userHelpers.generateVrificationToken(),
         expiration,
       };
       const user = await prisma.users.update({
@@ -212,7 +195,7 @@ exports.forgetPassword = async (req, res, next) => {
   }
 };
 // verifyToken controller
-exports.verifyToken = async (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
   const { token, email } = req.params;
 
   try {
@@ -244,13 +227,13 @@ exports.verifyToken = async (req, res, next) => {
   }
 };
 // reset password controller
-exports.resetPassword = async (req, res, next) => {
+export const resetPassword = async (req, res, next) => {
   try {
     const { email } = req.params;
     let { password } = req.body;
-    password = await passwordUtil.hashPassword(password);
+    password = await hashPassword(password);
 
-    const exists = await checkUserExists(email);
+    const exists = await userHelpers.checkUserExists(email);
 
     if (!exists) {
       throw new HttpException(HttpStatus.NOT_FOUND, "User not found");

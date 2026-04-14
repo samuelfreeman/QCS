@@ -1,17 +1,10 @@
-const {
-  CREATED,
-  DELIVERED,
-  DISPATCHED,
-  ARRIVED,
-  shares,
-  RETURNED,
-} = require("../utils/constants");
+import constants from "../utils/constants.js";
 
-const HttpException = require("../middlewares/http-exception");
+import HttpException from "../middlewares/http-exception.js";
 
-const HttpStatus = require("../utils/httpStatus");
+import HttpStatus from "../utils/httpStatus.js";
 
-const prisma = require("../utils/prismaUtil");
+import prisma from "../utils/prismaUtil.js";
 
 // helper function for package pickup
 const orderCheckPickup = async (packages, pickupBikerId) => {
@@ -32,13 +25,13 @@ const orderCheckPickup = async (packages, pickupBikerId) => {
   });
 
   const bikerId = orderPackage.map((pkg) =>
-    pkg.pickupBiker ? pkg.pickupBiker.id : null
+    pkg.pickupBiker ? pkg.pickupBiker.id : null,
   );
 
   if (bikerId.some((id) => id === pickupBikerId)) {
     throw new HttpException(
       HttpStatus.NOT_FOUND,
-      `OrderPackage has already been picked up by the same biker`
+      `OrderPackage has already been picked up by the same biker`,
     );
   }
 };
@@ -61,14 +54,14 @@ const orderCheckDeliver = async (packages, deliverBikerId) => {
   });
 
   const bikerId = orderPackage.map((pkg) =>
-    pkg.deliverBiker ? pkg.deliverBiker.id : null
+    pkg.deliverBiker ? pkg.deliverBiker.id : null,
   );
 
   // checks if its the same biker
   if (bikerId.some((id) => id === deliverBikerId)) {
     throw new HttpException(
       HttpStatus.UNPROCESSABLE_ENTITY,
-      `OrderPackage has already been assigned to the same biker`
+      `OrderPackage has already been assigned to the same biker`,
     );
   }
 };
@@ -148,10 +141,10 @@ const bikerDeliveryShares = async (type, bikerId, dates) => {
     case shares.WEEKLY:
       const date = new Date(dates.year, 0, 1 + (dates.week - 1) * 7); // Calculate the date of the first day of the week
       const startOfWeek = new Date(
-        date.setDate(date.getDate() - date.getDay())
+        date.setDate(date.getDate() - date.getDay()),
       ); // Get the start of the week
       const endOfWeek = new Date(
-        startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000
+        startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000,
       ); // Add 6 days to get the end of the week
 
       return await prisma.orderPackages.findMany({
@@ -390,10 +383,10 @@ const bikerPickupShares = async (type, bikerId, dates) => {
     case shares.WEEKLY:
       const date = new Date(dates.year, 0, 1 + (dates.week - 1) * 7); // Calculate the date of the first day of the week
       const startOfWeek = new Date(
-        date.setDate(date.getDate() - date.getDay())
+        date.setDate(date.getDate() - date.getDay()),
       ); // Get the start of the week
       const endOfWeek = new Date(
-        startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000
+        startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000,
       ); // Add 6 days to get the end of the week
 
       return await prisma.orderPackages.findMany({
@@ -579,7 +572,7 @@ const updtBiker = async (id, data) => {
     loggerUtil.error("UNPROCESSABLE_ENTITY");
     throw new HttpException(
       HttpStatus.UNPROCESSABLE_ENTITY,
-      "Could not update biker"
+      "Could not update biker",
     );
   } else {
     return user;
@@ -604,7 +597,7 @@ const saveBiker = async (data) => {
     loggerUtil.error("Could not create biker");
     throw new HttpException(
       HttpStatus.INTERNAL_SERVER_ERROR,
-      "Could not create biker"
+      "Could not create biker",
     );
   } else {
     return biker;
@@ -640,7 +633,7 @@ const getOneBiker = async (id) => {
     return biker;
   }
 };
-module.exports = {
+export {
   orderCheckPickup,
   orderCheckDeliver,
   bikerDeliveryShares,

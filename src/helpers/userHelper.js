@@ -1,7 +1,7 @@
-const loggerUtil = require("../utils/loggerUtil");
-const crypto = require("crypto");
-const prisma = require("../utils/prismaUtil");
-const HttpException = require("../middlewares/http-exception");
+import loggerUtil from "../utils/loggerUtil.js";
+import crypto from "crypto";
+import prisma from "../utils/prismaUtil.js";
+import HttpException from "../middlewares/http-exception.js";
 // to check  an existing user
 const checkUserExists = async (email) => {
   return await prisma.users.findUnique({
@@ -28,7 +28,7 @@ const validateEmail = async (email) => {
     loggerUtil.error("Incorrect email");
     throw new HttpException(
       HttpStatus.UNPROCESSABLE_ENTITY,
-      "Incorrect email!"
+      "Incorrect email!",
     );
   }
   return emailVal;
@@ -49,7 +49,7 @@ const validateConfirmed = async (email) => {
     loggerUtil.error("User not Confirmed");
     throw new HttpException(
       HttpStatus.UNPROCESSABLE_ENTITY,
-      "User not Confirmed Contact your Admin!"
+      "User not Confirmed Contact your Admin!",
     );
   }
   return validatedEmail;
@@ -60,11 +60,11 @@ const validatePwd = async (userpwd, syspwd) => {
 
   if (validPwd === false || validPwd === "false") {
     loggerUtil.error(
-      "Invalid Credentials , please enter the correct credentials"
+      "Invalid Credentials , please enter the correct credentials",
     );
     throw new HttpException(
       HttpStatus.UNPROCESSABLE_ENTITY,
-      "Invalid credentials,please enter the correct credentials"
+      "Invalid credentials,please enter the correct credentials",
     );
   } else {
     return validPwd;
@@ -109,7 +109,7 @@ const getUsers = async (location) => {
     },
   });
 };
-module.exports = {
+export {
   checkUserExists,
   saveUser,
   validateEmail,

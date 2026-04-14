@@ -1,4 +1,4 @@
-const prisma = require("../utils/prismaUtil");
+import prisma from "../utils/prismaUtil.js";
 
 //  checks a city to see whether it exits
 const checkCityExits = async (cityName) => {
@@ -14,9 +14,9 @@ const checkCityExits = async (cityName) => {
 const createCity = async (data) => {
   const city = await prisma.cities.create({
     data,
-    include:{
-        suburbs:true
-    }
+    include: {
+      suburbs: true,
+    },
   });
   return city;
 };
@@ -74,7 +74,7 @@ const deleteCity = async (id) => {
   return city;
 };
 
-module.exports = {
+export {
   checkCityExits,
   createCity,
   findSingleCity,

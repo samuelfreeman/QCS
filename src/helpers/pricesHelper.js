@@ -1,12 +1,10 @@
-const prisma = require('../utils/prismaUtil');
-const findCity = async id => {
-    const city = await prisma.cities.findFirst({
-        where: {
-            id
-        }
-    });
-    return city;
+import prisma from "../utils/prismaUtil.js";
+const findCity = async (id) => {
+  const city = await prisma.cities.findFirst({
+    where: {
+      id,
+    },
+  });
+  return city;
 };
-module.exports ={
-    findCity
-}
+export { findCity };

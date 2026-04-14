@@ -1,7 +1,9 @@
-const { Router } = require('express');
-const WebRouter = require('./web');
-const mobileRouter = require('./mobile');
+import { Router } from "express";
+import WebRouter from "./web/index.js";
+import mobileRouter from "./mobile/index.js";
+
 const V1Router = Router();
-V1Router.use('/web', WebRouter);
-V1Router.use('/mobile', mobileRouter);
-module.exports = V1Router;
+V1Router.use("/web", WebRouter);
+V1Router.use("/mobile", mobileRouter);
+
+export default V1Router;

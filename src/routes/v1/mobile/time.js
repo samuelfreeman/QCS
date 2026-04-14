@@ -1,6 +1,17 @@
-const { Router } = require('express');
-const timer = require('../../../controllers/time');
+import { Router } from "express";
+import * as timer from "../../../controllers/time.js";
 
 const ManageTimeRouter = Router();
-ManageTimeRouter.get('/', timer.time);
-module.exports = ManageTimeRouter;
+
+/**
+ * @swagger
+ * /api/v1/mobile/time:
+ *   get:
+ *     summary: Get current server time
+ *     tags: [Mobile - Time]
+ *     responses:
+ *       200:
+ *         description: Current server time
+ */
+ManageTimeRouter.get("/", timer.time);
+export default ManageTimeRouter;

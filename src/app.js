@@ -1,14 +1,21 @@
-const express = require("express");
-const http = require("http");
-const path = require("path");
-const cors = require("cors");
-const _debug = require("debug");
-const helmet = require("helmet");
-const bodyParser = require("body-parser");
-const compression = require("compression");
-const { run } = require("./utils/setupUtil");
-const AppRouter = require("./routes");
-require("dotenv/config");
+import express from "express";
+import http from "http";
+import path from "path";
+import cors from "cors";
+import _debug from "debug";
+import helmet from "helmet";
+import bodyParser from "body-parser";
+import compression from "compression";
+import swaggerUi from "swagger-ui-express";
+import { fileURLToPath } from "url";
+import swaggerSpec from "./utils/swaggerConfig.js";
+import { run } from "./utils/setupUtil.js";
+import AppRouter from "./routes/index.js";
+import "dotenv/config";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 (async () => {
   const app = express();
   // enable this if you run behind a proxy (e.g. nginx)
@@ -24,7 +31,7 @@ require("dotenv/config");
         // fallback to standard filter function
         return compression.filter(req, res);
       },
-    })
+    }),
   );
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
@@ -35,7 +42,7 @@ require("dotenv/config");
   app.use(
     helmet({
       crossOriginEmbedderPolicy: false,
-    })
+    }),
   );
   app.use(
     helmet.contentSecurityPolicy({
@@ -58,11 +65,16 @@ require("dotenv/config");
         styleSrc: ["'self'", "https:", "'unsafe-inline'"],
         scriptSrc: ["'self'", "http:", "https:", "'unsafe-inline'"],
       },
-    })
+    }),
   );
   app.use("/uploads", express.static(path.join(__dirname, "../../uploads/")));
   app.use("/assets", express.static(path.join(__dirname, "../client/assets/")));
   app.use(express.static(path.join(__dirname, "../client")));
+
+  // Swagger UI setup
+  app.use("/api-docs", swaggerUi.serve);
+  app.get("/api-docs", swaggerUi.setup(swaggerSpec, { explorer: true }));
+
   //Routes
   app.use("/api", AppRouter);
   app.get("/api", (req, res) => {

@@ -1,27 +1,12 @@
 // TO Do : seperate orders from order  : from order packages
 
-const prisma = require("../utils/prismaUtil");
-
-const moment = require("moment");
-
-const HttpException = require("../middlewares/http-exception");
-
-const loggerUtil = require("../utils/loggerUtil");
-
-const { formatGhPhoneNumber } = require("../utils/commonUtil");
-
-const {
-  CREATED,
-  PROCESSED,
-  DELIVERED,
-  DISPATCHED,
-  RETURNED,
-  ARRIVED,
-  ENROUTE,
-  PENDING,
-} = require("../utils/constants");
-
-const {
+import prisma from "../utils/prismaUtil.js";
+import moment from "moment";
+import HttpException from "../middlewares/http-exception.js";
+import loggerUtil from "../utils/loggerUtil.js";
+import { formatGhPhoneNumber } from "../utils/commonUtil.js";
+import constants from "../utils/constants.js";
+import {
   checkReceiverExists,
   findSurbCity,
   getOrderByStatus,
@@ -32,14 +17,12 @@ const {
   updatePackageStatus,
   getPackageDetails,
   updatePackages,
-} = require("../helpers/orderHelper");
-
-const HttpStatus = require("../utils/httpStatus");
-
-const { nanoid } = require("nanoid");
+} from "../helpers/orderHelper.js";
+import HttpStatus from "../utils/httpStatus.js";
+import { nanoid } from "nanoid";
 
 // function to create an order
-exports.createOrder = async (req, res, next) => {
+export const createOrder = async (req, res, next) => {
   try {
     const { packages, pickUpLocation, senderId, ...orders } = req.body;
     const orderCode = nanoid(10).toUpperCase();
@@ -64,7 +47,7 @@ exports.createOrder = async (req, res, next) => {
           const receivedBy = await checkReceiverExists(
             receiverId,
             receiver,
-            senderId
+            senderId,
           );
           const senderCity = await findSurbCity(pickUpLocation);
           const deliveryCity = await findSurbCity(deliveryLocation);
@@ -100,7 +83,7 @@ exports.createOrder = async (req, res, next) => {
               },
             },
           });
-        }
+        },
       ),
     ]);
     return res.status(HttpStatus.CREATED).json({
@@ -112,14 +95,14 @@ exports.createOrder = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
 //   function to get order by  order code
-exports.getOrderByCode = async (req, res, next) => {
+export const getOrderByCode = async (req, res, next) => {
   const { orderCode } = req.params;
   try {
     const order = await prisma.orders.findUnique({
@@ -147,13 +130,13 @@ exports.getOrderByCode = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message)
+      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message),
     );
   }
 };
 
 // function to get all present orders
-exports.getAllOrders = async (req, res, next) => {
+export const getAllOrders = async (req, res, next) => {
   try {
     const orders = await prisma.orders.findMany({
       include: {
@@ -176,12 +159,12 @@ exports.getAllOrders = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message)
+      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message),
     );
   }
 };
 //  orders  by sender id
-exports.updateOrdersBySenderId = async (req, res, next) => {
+export const updateOrdersBySenderId = async (req, res, next) => {
   const { senderId } = req.params; // get the senderId from the request parameters
   const updateData = req.body; // get the new data from the request body
   try {
@@ -200,13 +183,13 @@ exports.updateOrdersBySenderId = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 //  order packages
-exports.getAnalytics = async (req, res, next) => {
+export const getAnalytics = async (req, res, next) => {
   try {
     const location = req.params.location; // get location from request parameters
     const orderStatuses = [CREATED, PROCESSED, ARRIVED];
@@ -218,20 +201,20 @@ exports.getAnalytics = async (req, res, next) => {
     const resultLookup = createResultLookup([...resultOrder, ...resultCity]);
     const formattedResult = formatResult(
       [...orderStatuses, ...cityStatuses],
-      resultLookup
+      resultLookup,
     );
 
     res.status(HttpStatus.OK).json({ statuses: formattedResult });
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message)
+      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message),
     );
   }
 };
 
 // orders by status
-exports.getOrdersByStatus = async (req, res, next) => {
+export const getOrdersByStatus = async (req, res, next) => {
   const { status, location } = req.params; // get the status from the request parameters
   try {
     const orders = await getStatusOrders(status, location);
@@ -242,12 +225,12 @@ exports.getOrdersByStatus = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message)
+      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message),
     );
   }
 };
 
-exports.getAllOrdersbySenderID = async (req, res, next) => {
+export const getAllOrdersbySenderID = async (req, res, next) => {
   const { senderId } = req.params;
   try {
     const orders = await prisma.orders.findMany({
@@ -272,12 +255,12 @@ exports.getAllOrdersbySenderID = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message)
+      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message),
     );
   }
 };
 
-exports.deleteOrder = async (req, res, next) => {
+export const deleteOrder = async (req, res, next) => {
   try {
     const code = req.params.code;
 
@@ -312,22 +295,22 @@ exports.deleteOrder = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
 //   helper function for updating a packages status
 
-exports.processPackage = async (req, res, next) => {
+export const processPackage = async (req, res, next) => {
   const { id } = req.params;
   const { ...rest } = req.body;
-  const package = await getPackageDetails(id);
+  const orderPackage = await getPackageDetails(id);
 
-  const delivery_fee = package.deliveryFee;
-  const deliveryCity = package.suburb.cityId;
-  const senderCity = package.orders.suburbs.cityId;
+  const delivery_fee = orderPackage.deliveryFee;
+  const deliveryCity = orderPackage.suburb.cityId;
+  const senderCity = orderPackage.orders.suburbs.cityId;
   const shares = {
     pickup_share: 0,
     delivery_share: 0,
@@ -352,7 +335,7 @@ exports.processPackage = async (req, res, next) => {
     const { updatedPackage, history } = await updatePackageStatus(
       id,
       PROCESSED,
-      { ...rest, ...shares }
+      { ...rest, ...shares },
     );
     res.status(HttpStatus.CREATED).json({ package: updatedPackage, history });
   } catch (error) {
@@ -360,13 +343,13 @@ exports.processPackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
-exports.arrivedPackage = async (req, res, next) => {
+export const arrivedPackage = async (req, res, next) => {
   const { id } = req.params;
   const { ...rest } = req.body;
   try {
@@ -383,7 +366,7 @@ exports.arrivedPackage = async (req, res, next) => {
       const { updatedPackage, history } = await updatePackageStatus(
         id,
         ARRIVED,
-        rest
+        rest,
       );
       res.status(HttpStatus.OK).json({ package: updatedPackage, history });
     }
@@ -392,20 +375,20 @@ exports.arrivedPackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
-exports.enroutePackage = async (req, res, next) => {
+export const enroutePackage = async (req, res, next) => {
   const { id } = req.params;
   const { ...rest } = req.body;
   try {
     const { updatedPackage, history } = await updatePackageStatus(
       id,
       ENROUTE,
-      rest
+      rest,
     );
     res.status(HttpStatus.OK).json({ package: updatedPackage, history });
   } catch (error) {
@@ -413,41 +396,41 @@ exports.enroutePackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
-exports.dispatchedPackage = async (req, res, next) => {
+export const dispatchedPackage = async (req, res, next) => {
   const { id } = req.params;
   const { ...rest } = req.body;
   try {
     const { updatedPackage, history } = await updatePackageStatus(
       id,
       DISPATCHED,
-      rest
+      rest,
     );
     res.status(HttpStatus.OK).json({ package: updatedPackage, history });
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.BAD_REQUEST, error.message)
+      new HttpException(error.status || HttpStatus.BAD_REQUEST, error.message),
     );
   }
 };
 
-exports.deliveryPackage = async (req, res, next) => {
+export const deliveryPackage = async (req, res, next) => {
   const { id } = req.params;
   const { ...rest } = req.body;
   if (res.secondReceipientNumber !== undefined || null)
     rest.secondReceipientNumber = formatGhPhoneNumber(
-      rest.secondReceipientNumber
+      rest.secondReceipientNumber,
     );
   try {
     const { updatedPackage, history } = await updatePackageStatus(
       id,
       DELIVERED,
-      rest
+      rest,
     );
     res.status(HttpStatus.OK).json({ package: updatedPackage, history });
   } catch (error) {
@@ -455,20 +438,20 @@ exports.deliveryPackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
-exports.returnPackage = async (req, res, next) => {
+export const returnPackage = async (req, res, next) => {
   const { id } = req.params;
   const { ...rest } = req.body;
   try {
     const { updatedPackage, history } = await updatePackageStatus(
       id,
       RETURNED,
-      rest
+      rest,
     );
     res.status(HttpStatus.OK).json({ package: updatedPackage, history });
   } catch (error) {
@@ -476,20 +459,20 @@ exports.returnPackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
-exports.pendingPackage = async (req, res, next) => {
+export const pendingPackage = async (req, res, next) => {
   const { id } = req.params;
   const { ...rest } = req.body;
   try {
     const { updatedPackage, history } = await updatePackageStatus(
       id,
       PENDING,
-      rest
+      rest,
     );
     res.status(HttpStatus.OK).json({ package: updatedPackage, history });
   } catch (error) {
@@ -497,19 +480,18 @@ exports.pendingPackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
-
-exports.updateMultiplePackages = async (req, res, next) => {
+export const updateMultiplePackages = async (req, res, next) => {
   const { packageIds, packageStatus } = req.body; // Assuming an array of package IDs and a status are sent in the request body
   try {
     const { updatedPackages, historyEntries } = await updatePackages(
       packageIds,
-      packageStatus
+      packageStatus,
     );
 
     res.status(HttpStatus.OK).json({
@@ -520,12 +502,12 @@ exports.updateMultiplePackages = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.BAD_REQUEST, error.message)
+      new HttpException(error.status || HttpStatus.BAD_REQUEST, error.message),
     );
   }
 };
 
-exports.updatePackage = async (req, res, next) => {
+export const updatePackage = async (req, res, next) => {
   const { id } = req.params; //get package id
   const updateData = req.body; // get the new data from the request body
   try {
@@ -544,18 +526,18 @@ exports.updatePackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 
 // function for getting one package
-exports.getPackage = async (req, res, next) => {
+export const getPackage = async (req, res, next) => {
   const { id } = req.params; // get the package Id
 
   try {
-    const package = await prisma.orderPackages.findFirst({
+    const orderPackage = await prisma.orderPackages.findFirst({
       where: {
         id,
         del_flg: false,
@@ -572,20 +554,20 @@ exports.getPackage = async (req, res, next) => {
     });
 
     res.status(HttpStatus.OK).json({
-      package,
+      package: orderPackage,
     });
   } catch (error) {
     loggerUtil.error(error.message);
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 // function for deleting a package
-exports.deletePackage = async (req, res, next) => {
+export const deletePackage = async (req, res, next) => {
   const { id } = req.params; // get the package Id
 
   try {
@@ -603,7 +585,7 @@ exports.deletePackage = async (req, res, next) => {
     if (!findPackage) {
       throw new HttpException(HttpStatus.NOT_FOUND, "Package not found!");
     } else {
-      const package = await prisma.orderPackages.update({
+      const orderPackage = await prisma.orderPackages.update({
         where: {
           id,
         },
@@ -613,7 +595,7 @@ exports.deletePackage = async (req, res, next) => {
       });
       res.status(HttpStatus.OK).json({
         message: "Package  Deleted",
-        package,
+        package: orderPackage,
       });
     }
   } catch (error) {
@@ -621,13 +603,13 @@ exports.deletePackage = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 // master joe :says we wont be cancelling an order
-exports.cancelOrder = async (req, res, next) => {
+export const cancelOrder = async (req, res, next) => {
   const { orderId } = req.params;
 
   try {
@@ -649,10 +631,10 @@ exports.cancelOrder = async (req, res, next) => {
           del_flg: true,
         },
       });
-      for (const package of order) {
+      for (const pkg of order) {
         await prisma.orderPackages.update({
           where: {
-            id: package.id,
+            id: pkg.id,
           },
           data: {
             del_flg: true,

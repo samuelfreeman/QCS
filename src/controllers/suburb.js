@@ -1,14 +1,10 @@
-
-const prisma = require("../utils/prismaUtil");
-
-const HttpException = require("../middlewares/http-exception");
-
-const loggerUtil = require("../utils/loggerUtil");
-
-const HttpStatus = require("../utils/httpStatus");
+import prisma from "../utils/prismaUtil.js";
+import HttpException from "../middlewares/http-exception.js";
+import loggerUtil from "../utils/loggerUtil.js";
+import HttpStatus from "../utils/httpStatus.js";
 
 //  adding a suburb
-exports.createSuburb = async (req, res, next) => {
+export const createSuburb = async (req, res, next) => {
   try {
     const data = req.body;
     const city = await prisma.suburbs.create({
@@ -23,7 +19,7 @@ exports.createSuburb = async (req, res, next) => {
   }
 };
 //  get a single city suburbs
-exports.getCitySuburbs = async (req, res, next) => {
+export const getCitySuburbs = async (req, res, next) => {
   const { cityId } = req.params;
   try {
     const suburbs = await prisma.suburbs.findMany({
@@ -44,7 +40,7 @@ exports.getCitySuburbs = async (req, res, next) => {
   }
 };
 //  getting a single suburb
-exports.getSingleSuburb = async (req, res, next) => {
+export const getSingleSuburb = async (req, res, next) => {
   const { id } = req.params;
   try {
     const suburbs = await prisma.suburbs.findFirst({
@@ -62,13 +58,13 @@ exports.getSingleSuburb = async (req, res, next) => {
   } catch (error) {
     loggerUtil.error(error.message);
     next(
-      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message)
+      new HttpException(error.status || HttpStatus.NOT_FOUND, error.message),
     );
   }
 };
 
 //  updating a suburb by city id
-exports.updateSuburbCityId = async (req, res, next) => {
+export const updateSuburbCityId = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { cityId } = req.body;
@@ -88,12 +84,12 @@ exports.updateSuburbCityId = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
-exports.updateSuburb = async (req, res, next) => {
+export const updateSuburb = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
@@ -111,13 +107,13 @@ exports.updateSuburb = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
 //  deleting a suburb
-exports.removeSuburb = async (req, res, next) => {
+export const removeSuburb = async (req, res, next) => {
   try {
     const { id } = req.params;
     if (!id) {
@@ -137,9 +133,8 @@ exports.removeSuburb = async (req, res, next) => {
     next(
       new HttpException(
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message
-      )
+        error.message,
+      ),
     );
   }
 };
-

@@ -1,6 +1,6 @@
-const prisma = require("../utils/prismaUtil");
+import prisma from "../utils/prismaUtil.js";
 
-const { formatGhPhoneNumber } = require("../utils/commonUtil");
+import { formatGhPhoneNumber } from "../utils/commonUtil.js";
 
 // Helper function  for  creating an order
 const checkReceiverExists = async (id, receiver, senderId) => {
@@ -288,12 +288,12 @@ const updatePackages = async (packageIds, packageStatus) => {
           packageId: pkg.id,
         },
       });
-    })
+    }),
   );
 
   return { updatedPackages, historyEntries };
 };
-module.exports = {
+export {
   checkReceiverExists,
   findSurbCity,
   getOrderByStatus,

@@ -1,6 +1,6 @@
-const prisma = require("../utils/prismaUtil");
+import prisma from "../utils/prismaUtil.js";
 
-const moment = require("moment");
+import moment from "moment";
 
 const checkSenderExists = async (telephone) => {
   const sender = await prisma.senders.findUnique({
@@ -58,7 +58,6 @@ const updateUserTotp = async (isBiker, id, data) => {
   }
 };
 const findToken = async (otp, telephone) => {
-
   const sender = await prisma.senders.findFirst({
     where: {
       OR: [
@@ -73,7 +72,7 @@ const findToken = async (otp, telephone) => {
     },
     include: { suburbs: true },
   });
-console.log(sender)
+  console.log(sender);
   if (sender) {
     return { user: sender, isBiker: false };
   } else {
@@ -175,7 +174,7 @@ const removeSender = async (id) => {
   });
   return sender;
 };
-module.exports = {
+export {
   checkSenderExists,
   checkSuburbExists,
   checkUserExists,
