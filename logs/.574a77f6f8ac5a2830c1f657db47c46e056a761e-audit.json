@@ -9,6 +9,11 @@
             "date": 1776178876555,
             "name": "/home/sam/Documents/Allprojects/qcs_backend/logs/-error.log.2026-04-14",
             "hash": "dcc22a0025922fb21614429a5de736962bdd8dc30e8fe3c52a11645208f08c5b"
+        },
+        {
+            "date": 1776344721926,
+            "name": "/home/sam/Documents/Allprojects/qcs_backend/logs/-error.log.2026-04-16",
+            "hash": "aeebd16f735b211d231a6cb16158726c36d1c17644b6266f4fe9120609ba930b"
         }
     ],
     "hashType": "sha256"

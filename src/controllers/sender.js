@@ -37,6 +37,7 @@ export const createSender = async (req, res, next) => {
     });
   } catch (error) {
     loggerUtil.error(error.message);
+    console.log(error);
     next(
       new HttpException(
         error.status || HttpStatus.UNPROCESSABLE_ENTITY,

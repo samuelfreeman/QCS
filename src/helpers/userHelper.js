@@ -2,6 +2,7 @@ import loggerUtil from "../utils/loggerUtil.js";
 import crypto from "crypto";
 import prisma from "../utils/prismaUtil.js";
 import HttpException from "../middlewares/http-exception.js";
+import { comparePassword } from "../utils/passwordUtil.js";
 // to check  an existing user
 const checkUserExists = async (email) => {
   return await prisma.users.findUnique({
@@ -56,7 +57,7 @@ const validateConfirmed = async (email) => {
 };
 //  to validate password
 const validatePwd = async (userpwd, syspwd) => {
-  const validPwd = await passwordUtil.comparePassword(userpwd, syspwd);
+  const validPwd = await comparePassword(userpwd, syspwd);
 
   if (validPwd === false || validPwd === "false") {
     loggerUtil.error(
